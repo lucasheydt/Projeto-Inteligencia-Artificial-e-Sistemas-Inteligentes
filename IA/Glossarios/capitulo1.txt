@@ -1,0 +1,36 @@
+Ajuste Fino (Fine-tuning): Processo de refinar um modelo pré-treinado em um conjunto de dados menor e rotulado, tornando-o especialista em tarefas específicas, como responder instruções ou classificar e-mails
+.
+Aprendizado de Máquina (Machine Learning - ML): Subcampo da IA que desenvolve algoritmos capazes de aprender regras e padrões automaticamente a partir de dados, sem programação explícita para cada tarefa
+.
+Aprendizado Autossupervisionado (Self-supervised Learning): Método de treinamento onde o modelo gera seus próprios rótulos a partir dos dados de entrada (como prever a próxima palavra), dispensando a rotulagem manual humana durante o pré-treinamento
+.
+Aprendizado Profundo (Deep Learning - DL): Subconjunto do ML focado no uso de redes neurais com muitas camadas (redes neurais profundas) para modelar abstrações e padrões complexos
+.
+Arquitetura Transformer: Base para a maioria dos LLMs modernos; utiliza mecanismos de atenção para capturar relações e nuances da linguagem em longas sequências de texto
+.
+Auto-atenção (Self-attention): Mecanismo central do Transformer que permite ao modelo ponderar a importância de diferentes palavras em uma sequência ao fazer previsões
+.
+Comportamento Emergente (Emergent Behavior): Habilidades demonstradas pelo modelo que não foram explicitamente ensinadas durante o treinamento, como a capacidade de tradução surgindo de um modelo treinado apenas para prever a próxima palavra
+.
+Decodificador (Decoder): Submódulo do Transformer que gera o texto de saída. Modelos como o GPT utilizam apenas esta parte da arquitetura
+.
+IA Generativa (GenAI): Campo da IA que utiliza redes neurais profundas para criar novos conteúdos, como textos, imagens ou códigos
+.
+Inteligência Artificial (IA): Campo amplo dedicado à criação de sistemas capazes de realizar tarefas que exigem inteligência humana
+.
+Large Language Model (LLM): Rede neural profunda, com bilhões de parâmetros, treinada em imensas quantidades de dados para processar e gerar texto de forma coerente e contextual
+.
+Modelo de Fundação (Foundation Model): Um modelo resultante da fase de pré-treinamento que serve como base versátil para ser adaptado a diversas tarefas posteriores
+.
+Modelo Autorregressivo: Tipo de modelo, como o GPT, que utiliza suas próprias saídas anteriores como entradas para gerar a próxima palavra, garantindo fluidez e contexto
+.
+Parâmetros: Pesos ajustáveis dentro da rede neural que são otimizados durante o treinamento para melhorar as previsões do modelo
+.
+Pré-treinamento (Pretraining): Fase inicial onde o modelo é exposto a grandes volumes de texto não rotulado para desenvolver uma compreensão ampla da linguagem
+.
+Previsão da Próxima Palavra (Next-word Prediction): Tarefa fundamental de treinamento onde o modelo aprende a prever o termo seguinte em uma sequência, explorando a natureza sequencial da linguagem
+.
+Token: Unidade básica de texto (como uma palavra ou pontuação) que o modelo lê e processa
+.
+Zero-shot e Few-shot Learning: Habilidade do modelo de realizar tarefas sem exemplos prévios (zero-shot) ou com apenas alguns exemplos fornecidos no prompt (few-shot)
+.

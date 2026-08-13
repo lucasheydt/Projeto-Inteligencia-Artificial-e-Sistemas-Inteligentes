@@ -1,0 +1,77 @@
+================================================================================
+          ANOTAÇÕES TEÓRICAS: CONCEITOS FUNDAMENTAIS DE LLMs E IA
+================================================================================
+
+1. O QUE CARACTERIZA UM LARGE LANGUAGE MODEL (LLM)?
+--------------------------------------------------------------------------------
+- Definição: Uma rede neural profunda projetada para entender, gerar e responder 
+  a textos de forma semelhante à humana.
+- Significado de "Large" (Grande):
+  * Tamanho do Modelo: Número massivo de parâmetros (dezenas ou centenas de bilhões).
+  * Volume de Dados: Treinado em conjuntos de dados gigantescos (gigabytes/terabytes de texto).
+- Arquitetura Base: Baseiam-se na arquitetura Transformer, que permite prestar 
+  atenção seletiva a diferentes partes do texto para capturar nuances da linguagem.
+- Comportamentos Emergentes: Habilidade de realizar tarefas para as quais não 
+  foram explicitamente treinados (ex: tradução, resumo, código) apenas por terem 
+  sido expostos a imensas quantidades de dados.
+
+
+2. RELAÇÃO HIERÁRQUICA: IA, MACHINE LEARNING, DEEP LEARNING E LLMs
+--------------------------------------------------------------------------------
+[Inteligência Artificial (IA)]
+ └── [Machine Learning (ML)]
+      └── [Deep Learning (DL)]
+           └── [LLMs (Modelos de Linguagem)]
+
+- Inteligência Artificial (IA): O campo mais amplo. Busca criar sistemas capazes 
+  de realizar tarefas que exigem inteligência humana (raciocínio, visão, linguagem).
+- Machine Learning (ML): Subconjunto da IA. Focado em algoritmos que aprendem 
+  padrões automaticamente a partir de dados, sem programação explícita.
+- Deep Learning (DL): Subconjunto do ML. Utiliza Redes Neurais Profundas (muitas 
+  camadas) para modelar padrões complexos. Elimina a necessidade de extração 
+  manual de características por especialistas humanos.
+- LLMs: Aplicação específica de Deep Learning voltada para o processamento, 
+  compreensão e geração de linguagem natural.
+
+
+3. ORGANIZAÇÃO E ARQUITETURA DOS MODELOS GPT
+--------------------------------------------------------------------------------
+- Arquitetura: Utilizam uma versão simplificada do Transformer original.
+  * Transformer Original: Possuía Encoder (Codificador) + Decoder (Decodificador).
+  * Modelos GPT: Utilizam APENAS a parte do Decodificador (Decoder-only).
+- Processamento: Unidirecional (da esquerda para a direita). Essa característica 
+  os torna ideais para tarefas de geração contínua de texto.
+- Escala (Exemplo GPT-3):
+  * 96 camadas de Transformer.
+  * 175 bilhões de parâmetros.
+
+
+4. ETAPAS DO TREINAMENTO DE UM LLM
+--------------------------------------------------------------------------------
+O processo geral de criação é dividido em duas fases principais:
+
+Fase 1: Pré-treinamento (Pretraining)
+- Dados: Corpus vasto e diversificado de texto não rotulado (raw text / texto bruto).
+- Método: Aprendizado Autossupervisionado (o modelo aprende prevendo a próxima palavra).
+- Resultado: Gera o chamado "Modelo de Fundação" (Foundation Model).
+
+Fase 2: Ajuste Fino (Fine-tuning)
+- Dados: Conjunto de dados menor, especializado e rotulado.
+- Método: O modelo base é refinado para tarefas ou comportamentos específicos.
+- Tipos comuns:
+  * Instruction Fine-tuning: Para responder comandos e seguir instruções de chat.
+  * Classification Fine-tuning: Para categorizar textos (ex: detector de spam, análise de sentimento).
+
+
+5. FLUXO GERAL DE FUNCIONAMENTO (MODELO AUTORREGRESSIVO)
+--------------------------------------------------------------------------------
+- Funcionamento Autorregressivo:
+  1. O modelo recebe o texto de entrada (Prompt) e calcula a probabilidade da 
+     próxima palavra.
+  2. A geração ocorre palavra por palavra (ou token por token) de forma iterativa.
+  3. A cada passo, a palavra gerada é anexada de volta à entrada, servindo de 
+     contexto para a previsão do próximo token.
+- Mecanismo de Auto-atenção (Self-Attention): É o componente chave que permite 
+  ao modelo calcular o peso e a importância das palavras anteriores no texto, 
+  garantindo coerência e contexto na resposta final.
+================================================================================
