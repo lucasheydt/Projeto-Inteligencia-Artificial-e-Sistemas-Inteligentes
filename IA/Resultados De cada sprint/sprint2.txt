@@ -1,0 +1,114 @@
+# =====================================================================
+# ANÁLISE TÉCNICA: PRÉ-PROCESSAMENTO, TOKENIZAÇÃO E EMBEDDINGS
+# =====================================================================
+
+1. A NECESSIDADE DA CONVERSÃO DO TEXTO BRUTO
+Por que um LLM não pode trabalhar diretamente com o texto bruto?
+Redes neurais profundas, incluindo Large Language Models (LLMs), são 
+fundamentalmente motores matemáticos que operam através de multiplicações 
+de matrizes, adições e funções de ativação. O texto bruto (strings de 
+caracteres) é um tipo de dado qualitativo e não estruturado matematicamente. 
+Para que o modelo possa processar a linguagem, identificar padrões e calcular 
+probabilidades, o texto deve ser inevitavelmente traduzido para um formato 
+numérico quantitativo (tensores).
+
+
+2. O PAPEL DO VOCABULÁRIO E A MECÂNICA DOS TOKENS
+Qual é a função do vocabulário e a diferença entre token e Token ID?
+- O vocabulário atua como um "dicionário de conversão" finito que o modelo 
+conhece. Ele mapeia fragmentos de texto para identificadores únicos.
+- Token: É o fragmento textual em si. Dependendo do algoritmo de tokenização 
+utilizado nos testes (como o Byte-Pair Encoding via BPETokenizer("gpt2")), um 
+token pode ser uma palavra inteira, parte de uma palavra ou apenas um caractere.
+- Token ID: É o número inteiro correspondente a esse token específico dentro 
+do vocabulário predefinido.
+
+Evidência dos Testes: 
+Na execução do pipeline com o texto em português, observamos o texto sendo 
+quebrado em 35 tokens iniciais. O array impresso nos logs [46, 748, 268, ...] 
+representa exatamente os Token IDs, ou seja, os índices numéricos que substituem 
+as palavras e sílabas originais.
+
+
+3. A TRANSIÇÃO DO TOKEN ID PARA EMBEDDINGS
+Por que os Token IDs não são utilizados diretamente como representação semântica 
+e qual é a função dos embeddings?
+Os Token IDs resolvem o problema de transformar texto em número, mas introduzem 
+uma limitação: eles são variáveis categóricas arbitrárias. O ID 46 e o ID 47 
+não possuem nenhuma relação de proximidade semântica só porque seus números 
+são vizinhos. Operar matematicamente com esses IDs puros faria a rede neural 
+interpretar falsas relações de magnitude e ordem.
+
+A função dos Embeddings é projetar esses IDs categóricos em um espaço vetorial 
+contínuo de alta dimensão. Neste espaço, palavras com significados ou contextos 
+similares são posicionadas mais próximas umas das outras. O embedding converte 
+um número isolado, vazio de significado, em um vetor denso e rico em 
+representação semântica.
+
+Evidência dos Testes: 
+Ao analisar as saídas das camadas nos testes 1, 2 e 3, observamos a transição 
+do tensor de entrada (Token IDs) para o tensor de saída (Embeddings). O que 
+entrava na rede como um tensor 2D de IDs no formato [Batch, Contexto] foi 
+transformado em um tensor 3D de ponto flutuante no formato [Batch, Contexto, 
+Dimensão] (ex: torch.Size([2, 4, 64]) no Experimento 1).
+
+
+4. O CONTEXTO E A POSIÇÃO TEMPORAL
+Por que é necessário representar a posição dos tokens?
+Diferente de Redes Neurais Recorrentes (RNNs) que processam o texto de forma 
+puramente sequencial, a arquitetura Transformer lê todos os tokens da janela 
+de contexto simultaneamente em paralelo. Sem uma codificação posicional 
+(Positional Encoding) somada aos vetores de embedding, o modelo veria as 
+frases "O cão mordeu o homem" e "O homem mordeu o cão" como o exato mesmo 
+conjunto de dados (um "saco de palavras"), perdendo a estrutura sintática e o 
+significado atrelado à ordem temporal.
+
+
+5. O IMPACTO DO TAMANHO DO CONTEXTO E DA DIMENSÃO
+Qual é a relação entre tamanho do contexto e quantidade de amostras de treinamento?
+Existe uma relação inversamente proporcional, ditada pela forma como a janela 
+deslizante percorre o texto. Um contexto maior processa mais tokens de uma 
+só vez, reduzindo o número total de recortes (amostras) possíveis que podem ser 
+extraídos de um texto estático.
+
+Evidência dos Testes: 
+- Avaliando o conjunto de dados em inglês (com 5.145 tokens totais):
+  * No Experimento 1, com uma janela de Contexto = 4, o DataLoader gerou 5.141 
+    amostras (aplicação da janela deslizante: 5145 - 4 = 5141).
+  * No Experimento 3, ao aumentarmos bruscamente o Contexto para 256, a 
+    quantidade de amostras geradas caiu drasticamente para apenas 39. Isso 
+    limita a quantidade de exemplos independentes por época, embora cada 
+    exemplo carregue relações muito mais longas.
+
+Qual é o impacto da dimensão do embedding sobre as estruturas?
+A dimensão do embedding determina a capacidade do modelo de capturar nuances 
+semânticas e, simultaneamente, o seu custo computacional e consumo de memória (VRAM).
+
+Evidência dos Testes: 
+No Experimento 1 (Dim=64), as estruturas de dados geradas são muito leves. 
+No Experimento 3, utilizando Dim=768 (padrão em modelos robustos), o tensor 
+gerado cresce para [8, 256, 768]. O aumento da dimensionalidade impacta 
+diretamente o tamanho das matrizes de pesos (Weights) que a rede precisará 
+atualizar durante o backpropagation.
+
+
+6. PIPELINE DE DADOS E A PRÓXIMA SPRINT (ATENÇÃO)
+Qual é a função do DataLoader no pipeline?
+O DataLoader automatiza e otimiza o fluxo de alimentação de dados para a 
+rede neural. Em vez de injetar todos os milhares de tokens simultaneamente, 
+o DataLoader se encarrega de:
+- Agrupar os dados em Lotes (Batches).
+- Segmentar as sequências no tamanho exato exigido pelo modelo (tamanho do contexto).
+- Converter e empacotar essas amostras em Tensores prontos para o processamento em GPU.
+  (Ex: empacotar os dados em lotes de 4 amostras contendo 8 tokens cada, 
+  formando a entrada [4, 8]).
+
+Quais informações produzidas nesta Sprint serão utilizadas pelo mecanismo de atenção da Sprint seguinte?
+O artefato final e mais importante desta etapa — o tensor tridimensional de 
+saída da camada de embeddings (por exemplo, torch.Size([8, 256, 768])) — será 
+a entrada fundamental para o cálculo de Self-Attention na próxima Sprint.
+
+É a partir desta matriz rica (que agora combina a identidade do token, sua 
+semântica e sua posição) que o modelo calculará as matrizes de Query (Q), 
+Key (K) e Value (V). Isso permitirá que o Transformer descubra quais tokens 
+devem "prestar atenção" uns aos outros dentro daquela janela específica de contexto.
