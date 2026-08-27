@@ -1,0 +1,20 @@
+**Glossário: Capítulo 2**
+
+**Termos e Conceitos-Chave**
+
+* **Abordagem de Janela Deslizante (Sliding Window):** Técnica de amostragem que percorre o texto extraindo blocos de entrada e alvos sequenciais. O alvo a ser previsto é a própria entrada deslocada uma posição para a direita.
+* **Camada de Embedding (Embedding Layer):** Tabela de busca (*lookup table*) em redes neurais que associa o ID numérico de cada token a um vetor de pesos treináveis.
+* **Codificação de Par de Bytes (Byte Pair Encoding - BPE):** Algoritmo de tokenização que constrói o vocabulário fundindo caracteres e subpalavras frequentes. Permite que modelos como o GPT processem termos inéditos sem precisar de um token genérico para palavras desconhecidas.
+* **Embeddings de Palavras (Word Embeddings):** Mapeamento de elementos discretos (palavras ou subpalavras) em vetores contínuos de alta dimensão, convertendo dados textuais em formatos numéricos densos para redes profundas.
+* **Embeddings Posicionais Absolutos (Absolute Positional Embeddings):** Vetores somados diretamente aos embeddings dos tokens para indicar sua posição exata na sequência, injetando noção de ordem em arquiteturas de autoatenção.
+* **Embeddings Posicionais Relativos (Relative Positional Embeddings):** Codificam a distância entre tokens em vez de sua localização fixa. Facilitam a generalização do modelo para sequências de comprimentos não vistos no treinamento.
+* **Identificadores de Token (Token IDs):** Números inteiros únicos atribuídos a cada token do vocabulário, servindo como ponte entre o texto e a camada de embedding.
+* **Passo (Stride):** Número de posições que a janela deslizante avança a cada amostragem. Controla a sobreposição dos dados de treino para otimizar o uso do conjunto de dados e evitar *overfitting*.
+* **Tamanho do Contexto (Context Size / Max Length):** Limite máximo de tokens de entrada que um modelo consegue processar em uma única passagem.
+* **Token:** A menor unidade de texto (palavra, subpalavra, caractere ou pontuação) em que a entrada é dividida para ser processada pelo modelo.
+* **Token `[PAD]` (Padding):** Marcador de preenchimento usado no processamento em lotes (*batches*) para igualar o tamanho de sequências mais curtas ao da maior sequência do lote.
+* **Token `<|endoftext|>` (End of Text):** Token de controle que sinaliza o início, o fim ou a separação entre textos independentes concatenados no conjunto de dados.
+* **Token `<|unk|>` (Unknown):** Marcador genérico usado para representar palavras ausentes no vocabulário de treinamento.
+* **Tokenização (Tokenization):** Etapa de pré-processamento que divide o texto bruto em tokens antes da conversão para IDs numéricos.
+* **Vocabulário (Vocabulary):** Mapeamento completo de todos os tokens únicos do modelo para seus respectivos IDs numéricos.
+* **Word2Vec:** Modelo clássico de embedding que treina uma rede neural simples para prever o contexto de uma palavra (ou vice-versa), aproximando termos semanticamente similares no espaço vetorial.
