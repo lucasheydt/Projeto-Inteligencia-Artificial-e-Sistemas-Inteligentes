@@ -1,0 +1,62 @@
+
+
+**1. Self-Attention e o Impacto do Fator de Escala**
+
+* A execução do Self-Attention simplificado gera vetores de contexto no formato `torch.Size([6, 3])`, e a soma dos pesos de atenção da primeira linha atinge aproximadamente `1.0000001192092896`, comprovando a normalização matemática da função softmax.
+
+
+* A matriz de atenção sem escala exibe "Valores Extremos", indicando que o softmax tende a gerar valores muito próximos de 1 numa única palavra, o que anula os gradientes durante o treino.
+
+
+* A introdução do Scaled Dot-Product gera uma "Distribuição Suave" visível no mapa de calor, demonstrando que a escala distribui melhor a atenção entre as palavras da sequência.
+
+
+
+**2. Comportamento da Máscara Causal**
+
+* A implementação da máscara causal bloqueia efetivamente o acesso a informações futuras, o que é provado visualmente pelo triângulo superior totalmente preto na matriz.
+
+
+* Esse triângulo preto corresponde a um peso de atenção igual a `0.0`.
+
+
+* Consequentemente, o cálculo garante que os tokens não "enxergam" as palavras à frente na sequência, respeitando a direcionalidade necessária para modelos de geração de texto.
+
+
+
+**3. Self-Attention vs. Multi-Head Attention (Heads e Dimensões)**
+
+* O Self-Attention tradicional (Single Head) processa a informação de uma só vez, utilizando a dimensão total projetada, como evidenciado por uma 'Head' única de dimensão `128`.
+
+
+* Ao transitar para o Multi-Head Attention, o formato final de saída mantém-se estruturalmente igual ao do Self-Attention (ex: `torch.Size([1, 8, 128])`).
+
+
+* A principal diferença arquitetónica ocorre internamente: ao instanciar 2 heads, a dimensão interna cai para `64` (`d_out / 2`), e ao utilizar 4 heads, a dimensão reduz-se para `32` (`d_out / 4`).
+
+
+* Este particionamento divide o espaço vetorial, permitindo que o modelo foque em múltiplas relações (sintaxe vs semântica) paralelamente.
+
+
+
+**4. Flexibilidade com Diferentes Sequências e Embeddings**
+
+* As operações matriciais tornam o modelo totalmente agnóstico em relação ao tamanho da sequência de entrada e à dimensão do embedding original.
+
+
+* Num Cenário A (Leve), com 4 tokens e dimensão de entrada `16`, a projeção ocorre sem erros, resultando num formato de saída de `torch.Size([1, 4, 32])`.
+
+
+* Num Cenário B (Pesado), simulando a escala de um Large Language Model com um batch de `2`, sequência de `32` tokens e dimensão de entrada de `256`, o mecanismo adapta-se automaticamente, originando uma matriz pós-atenção com o formato `torch.Size([2, 32, 512])`.
+
+
+
+**5. Validação da Pipeline Integrada do Transformer**
+
+* O fluxo de dados do Transformer opera de forma correta e sequencial de ponta a ponta: a etapa de tokenização e divisão em lotes produz tensores de entrada no formato `torch.Size([2, 8])`.
+
+
+* Na fase de Embeddings, os IDs são convertidos corretamente para representações vetoriais de formato `torch.Size([2, 8, 256])`.
+
+
+* Na fase final, a passagem desses vetores pelo Multi-Head Attention resulta em matrizes de contexto finais exatas de formato `torch.Size([2, 8, 256])`, validando a integração estrutural exigida na Sprint.
