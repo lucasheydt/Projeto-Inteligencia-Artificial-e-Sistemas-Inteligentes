@@ -1,0 +1,53 @@
+**Glossário: Capítulo 3**
+
+**Termos e Conceitos-Chave**
+
+* **Atenção Autossupervisionada / Autoatenção (Self-Attention):** Mecanismo que permite ao modelo analisar cada token em relação aos demais tokens da sequência, identificando quais informações são mais importantes para representar cada elemento.
+
+* **Atenção Causal / Atenção Mascarada (Causal Attention / Masked Attention):** Tipo de autoatenção utilizado em modelos que geram texto, como os modelos GPT. Impede que o modelo veja tokens futuros, permitindo que cada posição utilize apenas as informações anteriores e a própria posição.
+
+* **Atenção Multi-cabeça (Multi-Head Attention):** Extensão da autoatenção que divide o mecanismo em várias cabeças trabalhando em paralelo. Cada cabeça possui seus próprios pesos e pode aprender diferentes relações entre os tokens.
+
+* **Atenção Produto-Escalar Escalada (Scaled Dot-Product Attention):** Forma de calcular a atenção utilizando o produto escalar entre *Queries* e *Keys*. O resultado é dividido pela raiz quadrada da dimensão das *Keys* para manter os valores em uma escala adequada antes da aplicação do *softmax*.
+
+* **Vetor de Contexto (Context Vector):** Vetor criado a partir da combinação dos *Values* de todos os tokens. Cada *Value* recebe um peso de acordo com sua importância para o token que está sendo analisado.
+
+* **Vetores Query, Key e Value (Query, Key e Value):** Três representações geradas a partir dos embeddings de entrada. São utilizadas pela atenção para determinar quais informações devem ser consultadas, comparadas e utilizadas na construção do resultado.
+
+* **Query (q):** Representa o que o token atual está procurando ou tentando identificar nos outros tokens da sequência.
+
+* **Key (k):** Representa as características de cada token que serão comparadas com a *Query* para determinar o nível de atenção que ele deve receber.
+
+* **Value (v):** Contém a informação que será realmente utilizada na construção do vetor de contexto depois que os pesos de atenção forem calculados.
+
+* **Pontuação de Atenção (Attention Score):** Valor obtido ao comparar uma *Query* com uma *Key*, normalmente por meio de um produto escalar. Quanto maior a pontuação, maior tende a ser a relação entre os dois tokens.
+
+* **Pesos de Atenção (Attention Weights):** Valores obtidos após aplicar a função *softmax* às pontuações de atenção. Eles indicam quanto cada token deve contribuir para o vetor de contexto e, em cada linha, somam 1.
+
+* **Máscara Causal (Causal Mask):** Matriz utilizada para impedir que um token tenha acesso às posições futuras da sequência. Normalmente possui formato triangular e substitui as posições proibidas por valores como $-\infty$ antes do *softmax*.
+
+* **Dropout em Atenção (Attention Dropout):** Técnica de regularização aplicada aos pesos de atenção durante o treinamento. Algumas conexões são desativadas aleatoriamente para ajudar a reduzir o *overfitting*.
+
+* **Vazamento de Informação (Information Leakage):** Situação em que o modelo consegue utilizar informações que não deveria conhecer naquele momento, como um token futuro durante a previsão do token atual. A máscara causal é utilizada para evitar esse problema.
+
+* **Projeção de Saída (Output Projection / out_proj):** Camada linear aplicada depois que as diferentes cabeças de atenção são combinadas. Sua função é transformar o resultado para a dimensão esperada pela próxima camada do modelo.
+
+**Classes e Funções PyTorch Implementadas**
+
+* **SelfAttention_v1:** Classe do PyTorch que implementa a autoatenção utilizando matrizes de pesos criadas manualmente com `nn.Parameter`. Esses pesos são treináveis e usados para gerar as *Queries*, *Keys* e *Values*.
+
+* **SelfAttention_v2:** Versão da autoatenção que utiliza camadas `nn.Linear` para realizar as projeções de *Query*, *Key* e *Value*. Essa abordagem deixa a implementação mais simples e aproveita os métodos de inicialização de pesos do PyTorch.
+
+* **CausalAttention:** Classe que combina a autoatenção com uma máscara causal e *Dropout*. Também permite que os dados sejam processados em lotes (*batches*).
+
+* **MultiHeadAttentionWrapper:** Classe que cria várias instâncias de `CausalAttention` e reúne seus resultados. Cada instância representa uma cabeça de atenção trabalhando separadamente.
+
+* **MultiHeadAttention:** Implementação mais eficiente da atenção multi-cabeça. Em vez de criar uma classe separada para cada cabeça, realiza as operações de todas elas de forma paralela e reorganiza os tensores internamente.
+
+* **register_buffer:** Método do PyTorch utilizado para registrar tensores que não são parâmetros treináveis, como a máscara causal. Esses tensores passam a acompanhar automaticamente o modelo quando ele é movido entre CPU e GPU.
+
+* **torch.softmax:** Função que transforma as pontuações de atenção em valores normalizados. O resultado funciona como uma distribuição de pesos, fazendo com que os valores de cada linha somem 1.
+
+* **torch.tril / torch.triu:** Funções utilizadas para trabalhar com matrizes triangulares. `torch.tril` mantém a parte inferior da matriz, sendo útil para criar máscaras causais, enquanto `torch.triu` mantém a parte superior.
+
+* **Operações de Redimensionamento (.view() e .transpose()):** Operações utilizadas para reorganizar os tensores durante a atenção multi-cabeça. Elas permitem separar a dimensão das cabeças e organizar os dados no formato necessário para realizar os cálculos de atenção em paralelo.
