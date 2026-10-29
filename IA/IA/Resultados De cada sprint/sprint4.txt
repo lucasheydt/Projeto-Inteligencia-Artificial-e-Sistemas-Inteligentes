@@ -1,0 +1,170 @@
+# Implementação e Análise de uma Arquitetura GPT Simplificada
+
+## Entregável 2 — Implementação do Transformer Block
+
+### Análise dimensional e estrutura funcional
+
+A validação estrutural foi concluída com sucesso, confirmando que não há perda dimensional através das ligações residuais e das projeções internas.
+
+Com base na simulação realizada utilizando `batch_size = 2`, `seq_len = 8` e `emb_dim = 64`, o fluxo de processamento dos tensores ocorre da seguinte forma:
+
+1. **Entrada do bloco (`Input`)**
+   - **Dimensão:** `[2, 8, 64]`
+   - Representa duas sequências, cada uma com oito tokens, mapeadas num espaço vetorial de 64 dimensões.
+
+2. **Primeira normalização (`LayerNorm 1 — Pre-Norm`)**
+   - **Dimensão:** `[2, 8, 64]`
+   - Estabiliza as médias e variâncias das características de cada token, mantendo as dimensões originais.
+
+3. **Atenção multi-cabeças (`Multi-Head Attention — MHA`)**
+   - **Dimensão de saída:** `[2, 8, 64]`
+   - Permite que os tokens troquem informação por meio da atenção com máscara causal. As representações das múltiplas cabeças são concatenadas e projetadas novamente para a dimensão original.
+
+4. **Primeira conexão residual (`Add`)**
+   - **Dimensão:** `[2, 8, 64]`
+   - Soma a entrada ao resultado da MHA após a aplicação de *dropout*. A conexão residual cria um caminho direto para o fluxo dos gradientes e ajuda a mitigar o problema de desaparecimento dos gradientes (*vanishing gradient*) em redes profundas.
+
+5. **Segunda normalização (`LayerNorm 2`)**
+   - **Dimensão:** `[2, 8, 64]`
+   - Normaliza as representações residuais antes do processamento pela rede FeedForward.
+
+6. **Rede FeedForward (`FFN`)**
+   - **Dimensão de saída:** `[2, 8, 64]`
+   - Introduz transformações não lineares. Embora a dimensão interna seja expandida durante o processamento, a camada linear final retorna o tensor à dimensão original.
+
+7. **Segunda conexão residual**
+   - **Dimensão final:** `[2, 8, 64]`
+   - Soma a entrada da segunda normalização à saída da FFN. A preservação das dimensões permite empilhar vários Transformer Blocks na construção do modelo GPT.
+
+---
+
+## Entregável 3 — Construção do modelo GPT
+
+### Documentação técnica da arquitetura GPT simplificada
+
+A arquitetura GPT combina embeddings com vários Transformer Blocks empilhados, formando uma rede autorregressiva. O modelo recebe uma sequência de IDs de tokens e calcula os *logits* — pontuações não normalizadas — para prever o próximo token em cada posição.
+
+### Parâmetros utilizados na validação
+
+| Parâmetro | Valor |
+|---|---:|
+| Tamanho do lote (`batch_size`) | 2 |
+| Comprimento da sequência (`seq_len`) | 10 tokens |
+| Dimensão do embedding (`emb_dim`) | 128 |
+| Tamanho do vocabulário (`vocab_size`) | 50.257 tokens |
+
+### Componentes principais
+
+1. **Entrada de IDs de tokens (`in_idx`)**
+   - **Função:** recebe a sequência de identificadores numéricos discretos gerados pelo tokenizer.
+   - **Dimensão observada:** `[2, 10]`, no formato `[batch_size, seq_len]`.
+
+2. **Embeddings de token e posição (`tok_emb` + `pos_emb`)**
+   - **Função:** `tok_emb` converte cada ID num vetor denso de 128 dimensões. Como o mecanismo de atenção não representa a ordem dos tokens por si só, `pos_emb` adiciona informação posicional para cada posição da sequência, de 0 a 9.
+   - A soma `x = tok_embeds + pos_embeds` reúne a informação do token e da sua posição.
+   - **Dimensão observada:** `[2, 10, 128]`, no formato `[batch_size, seq_len, emb_dim]`.
+
+3. **Dropout dos embeddings (`drop_emb`)**
+   - **Função:** aplica regularização estocástica à soma dos embeddings antes da entrada no primeiro Transformer Block, ajudando a prevenir o sobreajuste (*overfitting*).
+
+4. **Empilhamento dos Transformer Blocks (`trf_blocks`)**
+   - **Função:** executa em série `n_layers` blocos `TransformerBlock`. Cada bloco aplica Multi-Head Attention com máscara causal, Layer Normalization, FeedForward Network e conexões residuais.
+   - **Dimensão mantida:** `[2, 10, 128]`.
+
+5. **Normalização final (`final_norm`)**
+   - **Função:** normaliza as ativações do último Transformer Block antes da projeção final, contribuindo para a estabilidade numérica.
+   - **Dimensão mantida:** `[2, 10, 128]`.
+
+6. **Cabeça do modelo de linguagem (`out_head`)**
+   - **Função:** uma camada linear (`nn.Linear`) projeta cada representação oculta de 128 dimensões para o tamanho do vocabulário, de 50.257 tokens. Assim, cada posição produz pontuações para todos os tokens possíveis como próximo token.
+   - **Dimensão terminal observada:** `[2, 10, 50257]`, no formato `[batch_size, seq_len, vocab_size]`.
+
+---
+
+## Entregável 4 — Inferência e geração autorregressiva de texto
+
+O processo de inferência converte as representações vetoriais internas em texto por meio de um ciclo iterativo de previsão, token a token.
+
+### 1. Logits: pontuações não normalizadas
+
+Para uma sequência de entrada com comprimento \(T\), a camada `Language Model Head` gera um tensor de *logits* com dimensão `[batch_size, seq_len, vocab_size]`.
+
+Para prever o próximo token, utiliza-se o vetor de *logits* correspondente à última posição da sequência, \(T-1\). Para um lote de tamanho 1, esse vetor tem dimensão `[1, vocab_size]`.
+
+Os *logits* são pontuações brutas produzidas pela rede, e não probabilidades diretas.
+
+### 2. Probabilidades: Softmax e temperatura
+
+A função Softmax transforma os *logits* numa distribuição de probabilidades cuja soma é igual a 1:
+
+\[
+P(w_i) = \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}
+\]
+
+Em que:
+- \(z_i\) é o *logit* associado ao token \(i\);
+- \(T\) é a temperatura utilizada na amostragem.
+
+**Efeito da temperatura:**
+- **Temperatura baixa (\(T \to 0\)):** concentra a distribuição nos tokens com maior pontuação.
+- **Temperatura igual a 1 (\(T = 1.0\)):** mantém a escala original dos *logits* antes da Softmax.
+- **Temperatura alta (\(T > 1.0\)):** torna a distribuição mais uniforme e aumenta a diversidade potencial dos tokens gerados.
+
+### 3. Estratégias de seleção do próximo token
+
+- **Busca gulosa (*Greedy Search*):** seleciona o token com maior probabilidade (`argmax`). É determinística, mas pode favorecer repetições em contextos longos.
+- **Amostragem multinomial (*Multinomial Sampling*):** sorteia o próximo token de acordo com a distribuição de probabilidades.
+- **Filtragem Top-K:** mantém os \(K\) tokens com maior pontuação e atribui \(-\infty\) aos restantes *logits* antes da Softmax, restringindo o conjunto de tokens elegíveis para amostragem.
+
+### 4. Ciclo de geração autorregressiva
+
+A geração é autorregressiva porque cada token produzido passa a fazer parte da entrada usada na iteração seguinte.
+
+1. O modelo recebe a sequência de contexto atual, \(X_{\text{atual}}\).
+2. Se a sequência exceder a janela máxima (`context_length`), mantém-se apenas o trecho final permitido.
+3. O modelo executa o *forward pass* e calcula os *logits* para prever o próximo token, \(\hat{y}\).
+4. O token gerado é concatenado à sequência: \(X_{\text{novo}} = [X_{\text{atual}}, \hat{y}]\).
+5. O ciclo repete-se até atingir `max_new_tokens` ou gerar o token de fim de sequência (`EOS`).
+
+---
+
+## Entregável 5 — Experimentação e análise de desempenho
+
+Após a inclusão do caminho no `sys.path` e a execução do *benchmark*, foram obtidos os dados apresentados abaixo.
+
+### 1. Tabela comparativa dos experimentos
+
+| Experimento | `n_layers` | `n_heads` | `emb_dim` | Parâmetros treináveis | Memória estimada | Tempo de inferência (10 tokens) |
+|---|---:|---:|---:|---:|---:|---:|
+| Exp. 1 — Base (Small) | 2 | 4 | 128 | 13.294.592 | 50,71 MB | 0,0728 s |
+| Exp. 2 — Mais camadas | 6 | 4 | 128 | 14.086.144 | 53,73 MB | 0,1326 s |
+| Exp. 3 — Maior dimensão | 2 | 8 | 256 | 27.375.616 | 104,43 MB | 0,0993 s |
+
+### 2. Análise dos resultados
+
+#### Experimento 1 versus Experimento 2 — Impacto da profundidade
+
+**Alteração:** `n_layers` aumentou de 2 para 6.
+
+- **Parâmetros:** aumentaram de 13,29 milhões para 14,08 milhões, uma subida aproximada de 5,95%.
+- **Tempo de inferência:** aumentou de 0,0728 s para 0,1326 s, uma subida aproximada de 82,14%.
+- **Memória estimada:** aumentou de 50,71 MB para 53,73 MB.
+
+**Análise:** aumentar a profundidade adiciona capacidade de processamento sequencial e de representação abstrata. Como os blocos Transformer são executados em série, cada bloco acrescenta operações de normalização, atenção e FeedForward. Por isso, o custo computacional do *forward pass* cresce com o número de camadas, elevando a latência.
+
+#### Experimento 1 versus Experimento 3 — Impacto da largura
+
+**Alteração:** `emb_dim` aumentou de 128 para 256 e `n_heads` de 4 para 8.
+
+- **Parâmetros:** aumentaram de 13,29 milhões para 27,37 milhões, aproximadamente 105,9%.
+- **Memória estimada:** aumentou de 50,71 MB para 104,43 MB, aproximadamente 105,9%.
+- **Tempo de inferência:** aumentou de 0,0728 s para 0,0993 s, aproximadamente 36,4%.
+
+**Análise:** aumentar a dimensão dos embeddings amplia a capacidade representacional do modelo. As matrizes de projeção da atenção (\(W_q\), \(W_k\) e \(W_v\)) e, principalmente, as camadas da FeedForward têm custos que crescem aproximadamente de forma quadrática com a dimensão interna (\(\mathcal{O}(d_{\text{emb}}^2)\)). Isso ajuda a explicar o aumento observado no número de parâmetros e na memória.
+
+#### Efeito dos parâmetros de geração: temperatura e Top-K
+
+**Comportamento observado:** variar os parâmetros de amostragem em `generation.py`, como a temperatura (`T = 0.2` versus `T = 1.5`) ou o valor de `Top-K`, não altera a quantidade de parâmetros treináveis do modelo nem, por si só, a memória necessária para armazenar esses parâmetros.
+
+**Impacto funcional:** temperaturas altas (\(T > 1.0\)) tornam a distribuição pós-Softmax mais uniforme e podem aumentar a variedade dos tokens selecionados. Temperaturas baixas concentram a probabilidade nos tokens mais prováveis, tornando a geração mais previsível. A filtragem Top-K restringe a seleção aos \(K\) tokens com maior pontuação.
+
