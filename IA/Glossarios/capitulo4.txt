@@ -1,0 +1,107 @@
+GLOSSÁRIO — IMPLEMENTAÇÃO DE UM MODELO GPT DO ZERO
+
+1. Tokenização (Tokenization)
+É o processo de dividir um texto em unidades chamadas tokens e convertê-las em identificadores numéricos (token IDs), que podem ser processados pelo modelo. Um token pode corresponder a uma palavra, parte de uma palavra, pontuação ou outro fragmento de texto, dependendo do tokenizador utilizado.
+
+2. Token IDs
+São os números inteiros atribuídos pelo tokenizador a cada token do texto. O modelo recebe esses identificadores como entrada e os utiliza para consultar a camada de embeddings.
+
+3. Token Embedding
+É a camada que transforma cada token ID em um vetor numérico denso de dimensão fixa, chamado embedding. Esses vetores são representações aprendidas durante o treinamento e servem como entrada para o restante da rede.
+
+4. Positional Embedding (Embedding Posicional)
+É a representação numérica que informa ao modelo a posição de cada token na sequência. Em uma implementação GPT com embeddings posicionais aprendidos, o vetor posicional correspondente é somado ao embedding do token, permitindo que o modelo diferencie tokens iguais que aparecem em posições diferentes.
+
+5. Embedding
+É um vetor numérico que representa um token ou outra unidade de informação em um espaço de dimensão fixa. No GPT, os embeddings dos tokens são combinados com informações posicionais antes de serem processados pelos blocos Transformer.
+
+6. Context Vector (Vetor de Contexto)
+É a representação vetorial de um token após o processamento contextual. Ela pode incorporar informações sobre outros tokens da sequência, permitindo que a representação varie de acordo com o contexto em que o token aparece.
+
+7. Masked Multi-Head Attention (Atenção Mascarada com Múltiplas Cabeças)
+É o mecanismo de atenção utilizado pelo GPT para relacionar tokens da sequência. A máscara causal impede que uma posição utilize informações de tokens futuros, preservando a natureza autoregressiva do modelo. A atenção com múltiplas cabeças executa diferentes operações de atenção em paralelo, permitindo aprender diferentes tipos de relações entre os tokens.
+
+8. Query, Key e Value (Q, K e V)
+São três representações calculadas a partir dos vetores de entrada pela camada de atenção. Queries (consultas) são usadas para procurar informações relevantes; Keys (chaves) são comparadas com as queries para calcular os pesos de atenção; Values (valores) contêm a informação combinada de acordo com esses pesos.
+
+9. Transformer / Transformer Block (Bloco Transformer)
+É um componente estrutural central do GPT. No modelo GPT descrito neste glossário, cada bloco combina atenção mascarada com múltiplas cabeças, normalização de camada, uma rede FeedForward, ativações GELU, dropout e conexões residuais. O bloco transforma as representações dos tokens mantendo a dimensão do embedding na entrada e na saída. Vários blocos são empilhados para formar o modelo; por exemplo, a configuração GPT-2 de aproximadamente 124 milhões de parâmetros utiliza 12 blocos.
+
+10. LayerNorm (Layer Normalization / Normalização de Camada)
+É um mecanismo que normaliza as ativações ao longo da última dimensão de cada representação, ajudando a estabilizar o treinamento. A implementação inclui parâmetros treináveis de escala e deslocamento, além de um pequeno termo epsilon para estabilidade numérica. Na arquitetura GPT considerada aqui, a normalização é aplicada antes da atenção e antes da rede FeedForward dentro de cada bloco, e novamente antes da camada de saída final.
+
+11. Conexões Residuais (Shortcut Connections / Skip Connections)
+São conexões que adicionam a entrada original de um submódulo à saída desse submódulo. Elas criam um caminho alternativo para o fluxo de informação e dos gradientes durante o treinamento, ajudando a reduzir problemas de otimização em redes profundas, incluindo o desaparecimento de gradientes.
+
+12. FeedForward Network (Rede FeedForward)
+É um submódulo presente em cada bloco Transformer, composto tipicamente por duas camadas lineares com uma função de ativação entre elas. Em uma configuração GPT-2 pequena, ele expande a dimensão do embedding, por exemplo, de 768 para 3072, e depois a reduz novamente para 768. Diferentemente da atenção, que relaciona diferentes posições da sequência, a FeedForward processa cada posição individualmente usando a mesma rede.
+
+13. GELU (Gaussian Error Linear Unit)
+É uma função de ativação não linear usada na rede FeedForward. Ela transforma os valores de entrada de maneira suave, em vez de simplesmente zerar todos os valores negativos como faz a ReLU. Isso permite uma transição gradual entre valores de entrada e contribui para a capacidade de representação da rede.
+
+14. Dropout
+É uma técnica de regularização que desativa aleatoriamente parte das ativações durante o treinamento, ajudando a reduzir o overfitting. Na arquitetura descrita, há dropout nos embeddings de entrada e após as operações de atenção e FeedForward, antes da soma residual correspondente. Em geral, o dropout é desativado durante a inferência.
+
+15. Parâmetros do Modelo
+São os valores ajustáveis aprendidos durante o treinamento, como os pesos das camadas lineares, das embeddings e os parâmetros de escala e deslocamento da LayerNorm. A quantidade de parâmetros influencia a capacidade do modelo e os recursos computacionais necessários para armazená-lo e treiná-lo.
+
+16. GPT Model / GPT Backbone (Modelo GPT / Estrutura Principal)
+É a arquitetura completa que reúne a camada de embeddings dos tokens, os embeddings posicionais, o dropout de entrada, uma sequência de blocos Transformer, a normalização final e a camada linear de saída. O fluxo geral transforma os IDs de entrada em representações contextuais e, depois, em logits para o vocabulário.
+
+17. Language Model Head (Linear Output Layer / Cabeça de Saída Linear)
+É a camada linear final que projeta a representação de cada posição para um vetor cujo tamanho corresponde ao vocabulário do tokenizador. Por exemplo, para um vocabulário de 50.257 tokens, a camada produz 50.257 valores para cada posição da sequência. Esses valores são os logits.
+
+18. Logits
+São as pontuações numéricas brutas produzidas pela camada de saída para cada token do vocabulário. Eles ainda não são probabilidades normalizadas. Valores maiores indicam maior pontuação relativa antes da aplicação de uma função como Softmax.
+
+19. Softmax
+É uma função que transforma um conjunto de logits em uma distribuição de probabilidades, com valores entre 0 e 1 cuja soma é 1. Na geração de texto, essa distribuição pode ser usada para escolher ou amostrar o próximo token, conforme a estratégia de geração.
+
+20. Inferência
+É a etapa em que o modelo já treinado é utilizado para produzir previsões a partir de uma entrada. Na geração de texto, a inferência inclui calcular os logits e selecionar o próximo token a partir deles.
+
+21. Geração Autoregressiva
+É o processo iterativo no qual o modelo gera texto um token por vez. A partir de um contexto inicial, ele prevê o próximo token; o token escolhido é acrescentado à sequência e passa a fazer parte do contexto usado para a previsão seguinte. O processo continua até atingir um critério de parada.
+
+22. Context Length (Comprimento de Contexto)
+É o número máximo de posições de tokens que o modelo pode processar em uma única sequência, conforme sua configuração e implementação. O comprimento de contexto limita a quantidade de texto anterior que pode ser considerada diretamente em uma passagem do modelo.
+
+23. Vocabulário (Vocabulary)
+É o conjunto de tokens reconhecidos pelo tokenizador. O tamanho do vocabulário determina, entre outras coisas, o número de entradas na camada de token embedding e a dimensão da saída da cabeça linear de linguagem.
+
+24. Batch e Sequence Length (Lote e Comprimento da Sequência)
+Um batch é um conjunto de exemplos processados juntos. O comprimento da sequência indica quantos tokens há em cada exemplo. Em uma entrada típica do modelo, os IDs dos tokens são organizados em um tensor com dimensões de lote e sequência; a saída de logits acrescenta a dimensão do vocabulário.
+
+25. Tensor
+É uma estrutura de dados multidimensional utilizada para representar e processar números. No PyTorch, os token IDs, embeddings, ativações, pesos e logits são armazenados e manipulados como tensores.
+
+26. Gradiente
+É a informação matemática usada por algoritmos de otimização para determinar como ajustar os parâmetros do modelo para reduzir a função de perda. Durante o treinamento, os gradientes são calculados por retropropagação (backpropagation).
+
+27. Vanishing Gradient Problem (Problema do Desaparecimento do Gradiente)
+É um problema que pode ocorrer em redes profundas quando os gradientes se tornam muito pequenos ao retropropagar o erro para camadas anteriores. Isso pode dificultar a atualização dos parâmetros dessas camadas. Conexões residuais ajudam a melhorar o fluxo dos gradientes.
+
+28. Pré-treinamento (Pretraining)
+É a etapa de treinamento em que o modelo aprende padrões da linguagem a partir de grandes quantidades de texto. Em um modelo de linguagem autoregressivo, o objetivo típico é aprender a prever o próximo token com base nos tokens anteriores.
+
+29. Overfitting (Sobreajuste)
+Acontece quando o modelo se ajusta excessivamente aos exemplos de treinamento e apresenta desempenho pior em dados novos. Técnicas como dropout podem ajudar a reduzir esse problema.
+
+30. GPT-2 de 124 milhões de parâmetros
+É uma configuração pequena da família GPT-2 utilizada como exemplo didático em implementações de GPT do zero. Na configuração apresentada no livro de referência, ela utiliza embeddings de 768 dimensões, 12 cabeças de atenção e 12 blocos Transformer, com vocabulário de 50.257 tokens. Esses valores são específicos dessa configuração e não se aplicam a todos os modelos GPT.
+
+FLUXO GERAL DE DADOS NO GPT
+
+1. O texto é dividido em tokens pelo tokenizador.
+2. Os tokens são convertidos em token IDs.
+3. A camada Token Embedding transforma os IDs em vetores.
+4. Os Positional Embeddings são somados aos vetores dos tokens.
+5. O dropout de entrada é aplicado durante o treinamento.
+6. A sequência passa pelos blocos Transformer empilhados. Cada bloco usa atenção mascarada, LayerNorm, FeedForward, GELU, dropout e conexões residuais.
+7. A LayerNorm final normaliza as representações.
+8. A Language Model Head converte cada representação em logits sobre o vocabulário.
+9. Durante a geração, os logits podem ser convertidos em probabilidades por Softmax e usados para selecionar o próximo token.
+10. O token selecionado é anexado ao contexto, e o processo se repete na geração autoregressiva.
+
+OBSERVAÇÃO
+Este glossário reúne os principais conceitos necessários para compreender a estrutura e o fluxo de dados de uma implementação GPT do zero. Os números apresentados, como 768 dimensões, 3072 dimensões internas, 12 cabeças, 12 blocos e vocabulário de 50.257 tokens, são exemplos de uma configuração GPT-2 pequena, não regras universais para todas as arquiteturas GPT.
