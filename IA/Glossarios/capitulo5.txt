@@ -1,0 +1,84 @@
+GLOSSÁRIO: CAPÍTULO 5 – PRÉ-TREINAMENTO E AVALIAÇÃO
+
+Amostragem Probabilística (Probabilistic Sampling): Em vez de escolher
+sempre o token com maior probabilidade, a amostragem probabilística
+utiliza funções como torch.multinomial para amostrar o próximo token com
+base na sua probabilidade, introduzindo variedade e criatividade no
+texto gerado.
+
+Amostragem Top-k (Top-k Sampling): Estratégia de geração que restringe a
+amostragem aos “k” tokens mais prováveis. Os tokens fora do top-k têm as
+suas probabilidades substituídas por -infinito antes do softmax,
+garantindo que a probabilidade atribuída a eles seja zero, o que ajuda a
+evitar que o modelo escolha tokens sem sentido ao tentar ser mais
+criativo.
+
+Backpropagation (Retropropagação): O processo utilizado no treino para
+atualizar os pesos do modelo. Através do cálculo dos gradientes da
+função de perda (utilizando loss.backward()), a retropropagação orienta
+o otimizador sobre como ajustar os parâmetros da rede de modo a
+minimizar o erro nas previsões e aproximar a saída do alvo esperado.
+
+Decodificação Gulosa (Greedy Decoding): Estratégia padrão e mais
+conservadora para a geração de texto em modelos autorregressivos, na
+qual o modelo sempre escolhe o próximo token com a pontuação de
+probabilidade mais alta (argmax). Embora garanta textos coesos, tende a
+gerar saídas muito repetitivas e previsíveis.
+
+Early Stopping (Parada Antecipada): Técnica prática recomendada no
+treino para combater o sobreajuste. Ao monitorar a Perda de Validação ao
+longo das épocas, o treino é abortado e os pesos são restaurados para o
+momento em que a validação atingiu seu ponto mais baixo, evitando que a
+generalização da rede seja comprometida.
+
+Otimizador AdamW: Variante do otimizador Adam comum, frequentemente
+utilizada no treinamento de LLMs. Melhora a técnica de weight decay
+limitando o crescimento excessivo dos pesos e ajudando a mitigar
+problemas de sobreajuste.
+
+Overfitting (Sobreajuste): Situação de degradação da performance na qual
+o modelo para de aprender a generalizar os padrões do idioma e começa a
+memorizar estritamente os exemplos dos dados de treinamento. É
+evidenciado quando a Perda de Treinamento (Train Loss) continua caindo,
+mas a Perda de Validação (Val Loss) estabiliza ou aumenta.
+
+Perda de Entropia Cruzada (Cross-Entropy Loss): A função de perda mais
+utilizada no treino de redes neurais generativas, que mede a disparidade
+entre a distribuição de probabilidades gerada pelo modelo (previsão) e
+os tokens alvos (targets) do conjunto de dados. O treinamento atua
+reduzindo o valor dessa métrica.
+
+Perda de Validação (Validation Loss): Métrica fundamental no
+acompanhamento do desempenho durante o aprendizado da rede. Enquanto a
+perda de treino indica o desempenho nos textos vistos repetidamente, a
+perda de validação mede o desempenho em trechos textuais não
+contemplados pelo modelo no treino, revelando a capacidade de
+generalização da IA.
+
+Perplexidade (Perplexity): Métrica comum para mensurar a qualidade de
+modelos de linguagem, que atua em conjunto com a perda. Calculada como a
+função exponencial da perda (torch.exp(loss)), fornece um número
+interpretável que indica o tamanho efetivo do vocabulário entre o qual o
+modelo está em “dúvida” na hora de gerar a previsão. Quanto menor o
+valor, melhor.
+
+Pesos ou Parâmetros (Weights): Matrizes de valores numéricos associadas
+às camadas (como Embeddings e projeções Linear) que formam a “memória”
+matemática da rede. A finalidade primária do treino computacional (e da
+retropropagação) é otimizar esses parâmetros para aprimorar o desempenho
+de inferência da linguagem.
+
+Recuperação e Salvamento de Estado (State Dict Loading/Saving): Em
+PyTorch, o método padrão para evitar a repetição custosa do treinamento.
+Através das funções torch.save e load_state_dict(), as matrizes de
+parâmetros são gravadas e lidas em ficheiros binários (.pth),
+desvinculando o processo pesado de treino da inferência.
+
+Temperatura / Escalonamento de Temperatura (Temperature Scaling):
+Técnica utilizada em conjunto com a amostragem probabilística para gerir
+a previsibilidade do texto. Ao dividir as pontuações brutas (logits) por
+um valor de “temperatura” antes de aplicar o softmax, altera o
+comportamento das probabilidades: valores menores que 1 tornam a
+distribuição “afiada” (priorizando certezas e funcionando de forma
+semelhante ao greedy decoding), enquanto valores maiores que 1 aplainam
+a distribuição, induzindo respostas mais inesperadas e criativas.
